@@ -35,6 +35,10 @@ public partial class MainPage : ContentPage
         ToggleCompass();
         nowy();
         GetCurrentLocation();
+        var timer = Application.Current.Dispatcher.CreateTimer();
+        timer.Interval = TimeSpan.FromSeconds(3600000);
+        timer.Tick += (s, e) => nowy();
+        timer.Start();
     }
 
     private void ToggleCompass()
