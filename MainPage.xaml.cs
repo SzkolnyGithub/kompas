@@ -1,54 +1,115 @@
-﻿namespace zadanie22._02._24Badowski4c;
+﻿using System.Collections.ObjectModel;
+using Newtonsoft.Json;
+
+namespace kompasBadowski4c;
 
 public partial class MainPage : ContentPage
 {
-    public MainPage()
+    List<Stacje> stacje1 = new List<Stacje>();
+    public class Stacje
+    {
+        public string id_stacji { get; set; }
+        public string stacja { get; set; }
+        public string data_pomiaru { get; set; }
+        public string godzina_pomiaru { get; set; }
+        public string temperatura { get; set; }
+        public string predkosc_wiatru { get; set; }
+        public string kierunek_wiatru { get; set; }
+        public string wilgotnosc_wzgledna { get; set; }
+        public string suma_opadu { get; set; }
+        public string cisnienie { get; set; }
+    }
+
+    /*Location boston = new Location(42.358056, -71.063611);
+    Location sanFrancisco = new Location(37.783333, -122.416667);
+
+    double miles = Location.CalculateDistance(boston, sanFrancisco, DistanceUnits.Miles);*/
+
+    int kat = 0;
+    double lat = 0;
+    double lon = 0;
+	public MainPage()
 	{
 		InitializeComponent();
-	}
+        canvasView.Drawable = new GraphicsDrawable();
+        ToggleCompass();
+        nowy();
+        GetCurrentLocation();
+    }
 
-    public class GraphicsDrawable : IDrawable 
-	{
+    private void ToggleCompass()
+    {
+        if (Compass.Default.IsSupported)
+        {
+            if (!Compass.Default.IsMonitoring)
+            {
+                // Turn on compass
+                Compass.Default.ReadingChanged += Compass_ReadingChanged;
+                Compass.Default.Start(SensorSpeed.UI);
+            }
+            else
+            {
+                // Turn off compass
+                Compass.Default.Stop();
+                Compass.Default.ReadingChanged -= Compass_ReadingChanged;
+            }
+        }
+    }
+    public async Task GetCurrentLocation()
+    {
+
+            GeolocationRequest request = new GeolocationRequest(GeolocationAccuracy.Medium, TimeSpan.FromSeconds(10));
+
+            Location location = await Geolocation.Default.GetLocationAsync(request);
+
+            if (location != null)
+                Console.WriteLine($"Latitude: {location.Latitude}, Longitude: {location.Longitude}, Altitude: {location.Altitude}");
+        lat = location.Latitude;
+        lon = location.Longitude;
+    }
+    public async Task<List<Stacje>> nowy()
+    {
+        HttpClient client = new HttpClient();
+        string text = await client.GetStringAsync("http://localhost:3000/dane");
+        stacje1 = JsonConvert.DeserializeObject<List<Stacje>>(text);
+        return stacje1;
+    }
+
+    private void Compass_ReadingChanged(object sender, CompassChangedEventArgs e)
+    {
+        // Update UI Label with compass state
+        label1.TextColor = Colors.Green;
+        kat = Convert.ToInt32(e.Reading.HeadingMagneticNorth);
+        label1.Text = $"{e.Reading}";
+        canvasView.Drawable = new GraphicsDrawable
+        {
+            x = 200 + Convert.ToInt32(100 * Math.Cos(Math.PI * (0 - kat - 90) / 180)),
+            y = 200 + Convert.ToInt32(100 * Math.Sin(Math.PI * (0 - kat - 90) / 180)),
+            x2 = 200 + Convert.ToInt32(100 * Math.Cos(Math.PI * (kat - 90) / 180)),
+            y2 = 200 + Convert.ToInt32(100 * Math.Sin(Math.PI * (kat - 90) / 180))
+            //x3 = 200 + Convert.ToInt32(100 * Math.Cos(Math.PI * (/*to be continued*/)))
+        };
+        canvasView.Invalidate();
+    }
+
+    public class GraphicsDrawable : IDrawable
+    {
+        public float x { get; set; }
+        public float y { get; set; }
         public float x2 { get; set; }
         public float y2 { get; set; }
-        public float r { get; set; }
+        public float x3 { get; set; }
+        public float y3 { get; set; }
         public void Draw(ICanvas canvas, RectF dirtyRect)
-		{
-			//Random rand = new Random();
-			canvas.StrokeColor = Colors.Black;
-			canvas.StrokeSize = 5;
-			canvas.DrawLine(200, 200, 200, 10); // punkt 1 : (200, 200) punkt 2 : (200, 10) - dluga kreska
-            canvas.DrawLine(200, 200, x2, y2);
-            canvas.Rotate(r);
-            //canvas.StrokeSize = 8;
-            //canvas.DrawLine(rand.Next(10, 300), rand.Next(10, 300), rand.Next(10, 200), rand.Next(10, 200)); // punkt 1 : (200, 200) punkt 2 : (250, 130) - krotka kreska
-        }
-	}
-
-	private void klik(object sender, EventArgs e)
-	{
-        string[] coords = new string[4];
-        if (coordinates.Text == "" || coordinates.Text == null)
-		{
-            canvasView.Drawable = new GraphicsDrawable
-            {
-                x2 = 200f,
-                y2 = 150f
-            };
-            return;
-        } 
-        else
         {
-            coords = coordinates.Text.Split(";");
-            canvasView.Drawable = new GraphicsDrawable
-            {
-                x2 = (float)Convert.ToDouble(coords[0]),
-                y2 = (float)Convert.ToDouble(coords[1])  // ma sie krecic w zaleznosci od podanego kata
-            };
+            canvas.StrokeColor = Colors.Red;
+            canvas.StrokeSize = 5;
+            canvas.DrawLine(200, 200, x, y);
+            canvas.StrokeColor = Colors.Black;
+            canvas.DrawLine(200, 200, x2, y2);
+            canvas.StrokeColor = Colors.LightBlue;
+            canvas.DrawLine(200, 200, x3, y3);
         }
-		
-		
-		canvasView.Invalidate();
     }
 }
 
