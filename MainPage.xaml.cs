@@ -28,6 +28,7 @@ public partial class MainPage : ContentPage
     int kat = 0;
     double lat = 0;
     double lon = 0;
+    float kw;
 	public MainPage()
 	{
 		InitializeComponent();
@@ -35,6 +36,7 @@ public partial class MainPage : ContentPage
         ToggleCompass();
         nowy();
         GetCurrentLocation();
+        getWiatr();
         var timer = Application.Current.Dispatcher.CreateTimer();
         timer.Interval = TimeSpan.FromSeconds(3600000);
         timer.Tick += (s, e) => nowy();
@@ -59,6 +61,18 @@ public partial class MainPage : ContentPage
             }
         }
     }
+    private async void getWiatr()
+    {
+        HttpClient client = new HttpClient();
+        string text = await client.GetStringAsync("http://10.0.2.2:3000/latLon/" + lat + "/" + lon);
+        for(int i = 0; i < stacje1.Count; i++)
+        {
+            if (stacje1[i].stacja == text)
+            {
+                kw = (float)Convert.ToDouble(stacje1[i].kierunek_wiatru);
+            }
+        }
+    }
     public async Task GetCurrentLocation()
     {
 
@@ -74,8 +88,9 @@ public partial class MainPage : ContentPage
     public async Task<List<Stacje>> nowy()
     {
         HttpClient client = new HttpClient();
-        string text = await client.GetStringAsync("http://localhost:3000/dane");
+        string text = await client.GetStringAsync("http://10.0.2.2:3000/dane");
         stacje1 = JsonConvert.DeserializeObject<List<Stacje>>(text);
+        getWiatr();
         return stacje1;
     }
 
@@ -90,8 +105,9 @@ public partial class MainPage : ContentPage
             x = 200 + Convert.ToInt32(100 * Math.Cos(Math.PI * (0 - kat - 90) / 180)),
             y = 200 + Convert.ToInt32(100 * Math.Sin(Math.PI * (0 - kat - 90) / 180)),
             x2 = 200 + Convert.ToInt32(100 * Math.Cos(Math.PI * (kat - 90) / 180)),
-            y2 = 200 + Convert.ToInt32(100 * Math.Sin(Math.PI * (kat - 90) / 180))
-            //x3 = 200 + Convert.ToInt32(100 * Math.Cos(Math.PI * (/*to be continued*/)))
+            y2 = 200 + Convert.ToInt32(100 * Math.Sin(Math.PI * (kat - 90) / 180)),
+            x3 = 200 + Convert.ToInt32(100 * Math.Cos(Math.PI * (kw - kat - 90) / 180)),
+            y3 = 200 + Convert.ToInt32(100 * Math.Sin(Math.PI * (kw - kat - 90) / 180))
         };
         canvasView.Invalidate();
     }
@@ -110,7 +126,7 @@ public partial class MainPage : ContentPage
             canvas.StrokeSize = 5;
             canvas.DrawLine(200, 200, x, y);
             canvas.StrokeColor = Colors.Black;
-            canvas.DrawLine(200, 200, x2, y2);
+            canvas.DrawLine(200, 200, 200, 100);
             canvas.StrokeColor = Colors.LightBlue;
             canvas.DrawLine(200, 200, x3, y3);
         }

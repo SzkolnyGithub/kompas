@@ -3,7 +3,7 @@ using Android.Runtime;
 
 namespace kompasBadowski4c;
 
-[Application]
+[Application (UsesCleartextTraffic = true)]
 public class MainApplication : MauiApplication
 {
 	public MainApplication(IntPtr handle, JniHandleOwnership ownership)
