@@ -1,11 +1,18 @@
 ﻿using System.Collections.ObjectModel;
 using Newtonsoft.Json;
+using System.Collections.Generic;
+using System.Text.Json;
 
 namespace kompasBadowski4c;
 
 public partial class MainPage : ContentPage
 {
     List<Stacje> stacje1 = new List<Stacje>();
+    public class latLon
+    {
+        public double lat { get; set; }
+        public double lon { get; set; }
+    }
     public class Stacje
     {
         public string id_stacji { get; set; }
@@ -84,6 +91,7 @@ public partial class MainPage : ContentPage
                 Console.WriteLine($"Latitude: {location.Latitude}, Longitude: {location.Longitude}, Altitude: {location.Altitude}");
         lat = location.Latitude;
         lon = location.Longitude;
+        getDane();
     }
     public async Task<List<Stacje>> nowy()
     {
@@ -130,6 +138,13 @@ public partial class MainPage : ContentPage
             canvas.StrokeColor = Colors.LightBlue;
             canvas.DrawLine(200, 200, x3, y3);
         }
+    }
+    private void getDane()
+    {
+        latLon aplikacja = new latLon { lat = Math.Round(lat, 3), lon = Math.Round(lon, 3) };
+        //label2.Text = aplikacja.lat.ToString() + " " + aplikacja.lon.ToString();
+        string jsonData = JsonConvert.SerializeObject(aplikacja);
+        // https://learn.microsoft.com/en-us/dotnet/maui/data-cloud/rest?view=net-maui-8.0
     }
 }
 
