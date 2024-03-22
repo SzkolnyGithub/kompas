@@ -2,12 +2,18 @@
 using Newtonsoft.Json;
 using System.Collections.Generic;
 using System.Text.Json;
+using System.Text;
 
 namespace kompasBadowski4c;
 
 public partial class MainPage : ContentPage
 {
     List<Stacje> stacje1 = new List<Stacje>();
+    public class wiatr
+    {
+        public double kierunek { get; set; }
+        public double predkosc { get; set; }
+    }
     public class latLon
     {
         public double lat { get; set; }
@@ -99,6 +105,7 @@ public partial class MainPage : ContentPage
         string text = await client.GetStringAsync("http://10.0.2.2:3000/dane");
         stacje1 = JsonConvert.DeserializeObject<List<Stacje>>(text);
         getWiatr();
+        getDane();
         return stacje1;
     }
 
@@ -107,7 +114,7 @@ public partial class MainPage : ContentPage
         // Update UI Label with compass state
         label1.TextColor = Colors.Green;
         kat = Convert.ToInt32(e.Reading.HeadingMagneticNorth);
-        label1.Text = $"{e.Reading}";
+        //label1.Text = $"{e.Reading}";
         canvasView.Drawable = new GraphicsDrawable
         {
             x = 200 + Convert.ToInt32(100 * Math.Cos(Math.PI * (0 - kat - 90) / 180)),
@@ -139,12 +146,18 @@ public partial class MainPage : ContentPage
             canvas.DrawLine(200, 200, x3, y3);
         }
     }
-    private void getDane()
+    public async Task getDane()
     {
         latLon aplikacja = new latLon { lat = Math.Round(lat, 3), lon = Math.Round(lon, 3) };
         //label2.Text = aplikacja.lat.ToString() + " " + aplikacja.lon.ToString();
         string jsonData = JsonConvert.SerializeObject(aplikacja);
         // https://learn.microsoft.com/en-us/dotnet/maui/data-cloud/rest?view=net-maui-8.0
+        StringContent content = new StringContent(jsonData, Encoding.UTF8, "application/json");
+        HttpClient client = new HttpClient();
+        var response = await client.PostAsync("http://10.0.2.2:3000/latLon", content);
+        string responseJson = await response.Content.ReadAsStringAsync();
+        var responseData = JsonConvert.DeserializeObject<wiatr>(responseJson);
+        label1.Text = "kierunek: " + responseData.kierunek.ToString() + " predkosc: " + responseData.predkosc.ToString();
     }
 }
 
